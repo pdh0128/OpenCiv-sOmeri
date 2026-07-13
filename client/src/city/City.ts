@@ -48,8 +48,8 @@ export class City extends ActorGroup {
     this.stats = new Map<string, number>();
     this.statsPresent = false;
 
-    this.innerBorderColor = this.player.getCivilizationData()["inside_border_color"];
-    this.outsideBorderColor = this.player.getCivilizationData()["outside_border_color"];
+    this.innerBorderColor = this.player.getProvinceData()["inside_border_color"];
+    this.outsideBorderColor = this.player.getProvinceData()["outside_border_color"];
 
     this.territoryOverlays = [];
 
@@ -86,7 +86,7 @@ export class City extends ActorGroup {
 
       this.civIcon = new Actor({
         image: Game.getInstance().getImage(GameImage.SPRITESHEET),
-        spriteRegion: SpriteRegion[this.player.getCivilizationData()["icon_name"]],
+        spriteRegion: SpriteRegion[this.player.getProvinceData()["icon_name"]],
         x: this.nameLabel.getX() - 14,
         y: this.nameLabel.getY(),
         z: 4,
