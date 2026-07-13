@@ -4,12 +4,14 @@ import { NetworkEvents } from "../network/Client";
 import { InGameScene } from "../scene/type/InGameScene";
 import { Actor } from "../scene/Actor";
 import { ActorGroup } from "../scene/ActorGroup";
+import { GovernmentDisplayInfo } from "./GovernmentDisplayInfo";
 import { Label } from "./Label";
 import { ResearchDisplayInfo } from "./ResearchDisplayInfo";
 
 export class StatusBar extends ActorGroup {
   private statusBarActor: Actor;
   private researchDisplayInfo: ResearchDisplayInfo;
+  private governmentDisplayInfo: GovernmentDisplayInfo;
 
   private currentTurnText: string; //when currentTurnLabel may not be initalized yet
   private currentTurnLabel: Label;
@@ -140,7 +142,25 @@ export class StatusBar extends ActorGroup {
     this.cultureDescLabel = new Label({
       text: "Culture:",
       font: "16px serif",
-      fontColor: "white"
+      fontColor: "white",
+      onClick: () => {
+        const scene = Game.getInstance().getCurrentSceneAs<InGameScene>();
+
+        if (this.governmentDisplayInfo) {
+          scene.removeActor(this.governmentDisplayInfo);
+          this.governmentDisplayInfo = undefined;
+          return;
+        }
+
+        this.governmentDisplayInfo = new GovernmentDisplayInfo(
+          scene.getClientPlayer(),
+          Game.getInstance().getWidth() / 2 - 216,
+          Game.getInstance().getHeight() / 2 - 220,
+          432,
+          440
+        );
+        scene.addActor(this.governmentDisplayInfo);
+      }
     });
     await this.cultureDescLabel.conformSize();
     this.cultureDescLabel.setPosition(this.scienceLabel.getX() + this.scienceLabel.getWidth() + 10, 3);
