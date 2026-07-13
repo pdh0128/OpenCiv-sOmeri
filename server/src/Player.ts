@@ -311,10 +311,7 @@ export class Player {
   }
 
   public selectGovernmentBranch(branchId: string) {
-    // ponytail: getGovernmentBranchById lands on InGameState in Task 4; cast bridges the gap until then, drop it once that method exists.
-    const branchData = (Game.getInstance().getCurrentStateAs<InGameState>() as any).getGovernmentBranchById(
-      branchId
-    );
+    const branchData = Game.getInstance().getCurrentStateAs<InGameState>().getGovernmentBranchById(branchId);
     if (!branchData) {
       return;
     }
