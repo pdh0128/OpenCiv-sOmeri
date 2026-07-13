@@ -1,0 +1,96 @@
+provinces:
+  - name: 소메르 강 유역
+    icon_name: ROME_ICON
+    inside_border_color: rgba(46,125,50,0.20)
+    outside_border_color: rgb(200,168,68)
+    start_bias: floodplains
+    start_bias_desc: "시작 위치 편향: 범람원(강 유역)"
+    unique_unit_descs:
+      - 구품관제 서기관 (개척민 대체, 도시 설립 시 즉시 인구 +1)
+    unique_building_descs:
+      - 구휼 창고 (곳간 건물, 흉년 시 식량 손실 50% 경감)
+    ability_descs:
+      - 시조왕의 건국지: 모든 도시 생산력 +10%.
+      - 관개농법 원조: 범람원·담수 타일 식량 +1.
+    cities:
+      - 소메르
+      - 상류성
+      - 하류성
+      - 개토
+      - 회맹
+      - 구휼
+      - 왕도
+      - 구품
+      - 신의
+      - 통합
+
+  - name: 변경자치주
+    icon_name: MONGOLIA_ICON
+    inside_border_color: rgba(121,85,72,0.20)
+    outside_border_color: rgb(160,82,45)
+    start_bias: grass_hill
+    start_bias_desc: "시작 위치 편향: 구릉·산악"
+    unique_unit_descs:
+      - 변경 기병 (기사 대체, 이동력 +1)
+    ability_descs:
+      - 유목 연합의 후예: 기병 계열 유닛 전투력 +15%.
+      - 자치의 전통: 자국 영토 내 유닛 유지비 -20%.
+    cities:
+      - 변경성
+      - 산악진
+      - 화친
+      - 대치
+      - 자치
+      - 복속
+      - 편입
+      - 수비
+      - 관문
+      - 봉수
+
+  - name: 서부 변경주
+    icon_name: ENGLAND_ICON
+    inside_border_color: rgba(96,125,139,0.20)
+    outside_border_color: rgb(69,90,100)
+    start_bias: none
+    start_bias_desc: "시작 위치 편향: 없음"
+    unique_unit_descs:
+      - 수비대 (창병 대체, 방어력 +20%)
+    ability_descs:
+      - 침공과 수복의 땅: 자국 도시 방어력 +25%.
+      - 위기의 결속: 외침을 받는 동안 인접 광역주 유닛과 합류 시 이동력 패널티 없음.
+    cities:
+      - 서부성
+      - 관문진
+      - 수복
+      - 결집
+      - 변경로
+      - 위태
+      - 재통합
+      - 서변
+      - 방벽
+      - 귀환
+
+  - name: 해안 자치주
+    icon_name: MAMLUKS_ICON
+    inside_border_color: rgba(2,119,189,0.20)
+    outside_border_color: rgb(1,87,155)
+    start_bias: shallow_ocean
+    start_bias_desc: "시작 위치 편향: 얕은 바다(해안)"
+    unique_unit_descs:
+      - 상단 갤리 (갤리선 대체, 교역로 추가 +1)
+    unique_building_descs:
+      - 공설 시장 (시장 대체, 해안 인접 도시 골드 +15%)
+    ability_descs:
+      - 다섯 성읍의 자치: 해안 타일 인접 도시 골드 +20%.
+      - 무혈 편입의 전통: 도시국가와의 우호도 상승 속도 +25%.
+    cities:
+      - 항구성
+      - 교역
+      - 자치항
+      - 공설
+      - 오항
+      - 편입항
+      - 해상로
+      - 무역성
+      - 등대
+      - 시장
