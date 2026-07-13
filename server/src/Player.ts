@@ -3,6 +3,7 @@ import { ServerEvents } from "./Events";
 import { Game } from "./Game";
 import { City } from "./city/City";
 import { Unit } from "./unit/Unit";
+import { InGameState } from "./state/type/InGameState";
 
 /**
  * Represents a player in the game.
@@ -22,6 +23,9 @@ export class Player {
   private provinceData: Record<string, any>;
   private cities: City[];
   private units: Unit[];
+  private currentResearch: string | undefined;
+  private researchProgress: number;
+  private researchedTechs: Set<string>;
 
   /**
    * Creates a new player object.
@@ -35,6 +39,9 @@ export class Player {
     this.requestedNextTurn = false;
     this.cities = [];
     this.units = [];
+    this.currentResearch = undefined;
+    this.researchProgress = 0;
+    this.researchedTechs = new Set<string>();
 
     // Add event listener for when the player disconnects
     this.wsConnection.on("close", (data) => {
@@ -71,6 +78,28 @@ export class Player {
         if (this.wsConnection != websocket) return;
 
         this.resizeWindowCallback.call(undefined);
+      },
+      globalEvent: true
+    });
+
+    ServerEvents.on({
+      eventName: "queueResearch",
+      parentObject: this,
+      callback: (data, websocket) => {
+        if (this.wsConnection != websocket) return;
+
+        this.queueResearch(data["techId"]);
+        this.sendResearchQueueUpdate();
+      },
+      globalEvent: true
+    });
+
+    ServerEvents.on({
+      eventName: "nextTurn",
+      parentObject: this,
+      callback: () => {
+        this.processResearchTurn();
+        this.sendResearchQueueUpdate();
       },
       globalEvent: true
     });
@@ -200,5 +229,70 @@ export class Player {
 
   public removeUnit(unit: Unit) {
     this.units = this.units.filter((u) => u !== unit);
+  }
+
+  public queueResearch(techId: string) {
+    const techData = Game.getInstance().getCurrentStateAs<InGameState>().getTechnologyById(techId);
+    if (!techData) {
+      return;
+    }
+
+    if (this.researchedTechs.has(techId)) {
+      return;
+    }
+
+    const prereqsMet = (techData.prerequisites as string[]).every((id) => this.researchedTechs.has(id));
+    if (!prereqsMet) {
+      return;
+    }
+
+    this.currentResearch = techId;
+  }
+
+  public processResearchTurn() {
+    if (!this.currentResearch) {
+      return;
+    }
+
+    const totalScience = this.cities.reduce(
+      (sum, city) => sum + city.getStatline({ asArray: false })["science"],
+      0
+    );
+    this.researchProgress += totalScience;
+
+    const techData = Game.getInstance().getCurrentStateAs<InGameState>().getTechnologyById(this.currentResearch);
+    const cost = techData["research_cost"];
+
+    if (this.researchProgress >= cost) {
+      const completedId = this.currentResearch;
+      this.researchProgress -= cost;
+      this.currentResearch = undefined;
+      this.researchedTechs.add(completedId);
+    }
+  }
+
+  public sendResearchQueueUpdate() {
+    this.sendNetworkEvent({
+      event: "updateResearchQueue",
+      currentResearch: this.currentResearch,
+      progress: this.researchProgress,
+      researchedTechs: Array.from(this.researchedTechs)
+    });
+  }
+
+  public hasResearchedTech(techId: string): boolean {
+    return this.researchedTechs.has(techId);
+  }
+
+  public getCurrentResearch(): string | undefined {
+    return this.currentResearch;
+  }
+
+  public getResearchProgress(): number {
+    return this.researchProgress;
+  }
+
+  public getResearchedTechs(): string[] {
+    return Array.from(this.researchedTechs);
   }
 }
