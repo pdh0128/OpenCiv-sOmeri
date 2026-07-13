@@ -12,6 +12,7 @@ export class GovernmentDisplayInfo extends ActorGroup {
   private player: AbstractPlayer;
   private currentBranchLabel: Label;
   private branchCatalog: Record<string, any>[];
+  private branchRows: any[] = [];
 
   constructor(player: AbstractPlayer, x: number, y: number, width: number, height: number) {
     super({ x: x, y: y, z: 6, width: width, height: height, cameraApplies: false });
@@ -66,6 +67,7 @@ export class GovernmentDisplayInfo extends ActorGroup {
       parentObject: this,
       callback: () => {
         this.currentBranchLabel.setText(this.describeCurrentBranch());
+        this.renderBranchList(listbox);
       }
     });
 
@@ -85,6 +87,20 @@ export class GovernmentDisplayInfo extends ActorGroup {
   }
 
   private renderBranchList(listbox: ListBox) {
+    // ponytail: getRows() hands back the live internal array (no copy), so splicing
+    // it here keeps ListBox's own row bookkeeping (row positions/striping) in sync.
+    // Plain removeActor() alone only trims the render list, not this position list,
+    // so re-renders would drift every switch. Revisit if ListBox grows a removeRow().
+    const trackedRows = listbox.getRows();
+    for (const row of this.branchRows) {
+      listbox.removeActor(row);
+      const idx = trackedRows.indexOf(row);
+      if (idx >= 0) {
+        trackedRows.splice(idx, 1);
+      }
+    }
+    this.branchRows = [];
+
     const selected = this.player.getSelectedGovernmentBranch();
 
     for (const branch of this.branchCatalog) {
@@ -102,7 +118,7 @@ export class GovernmentDisplayInfo extends ActorGroup {
         }
       });
 
-      listbox.addRow({
+      const row = listbox.addRow({
         category: "정부",
         text: `${marker}${branch["name"]} (+${branch["bonus_percent"]}% ${branch["stat"]})`,
         textX: listbox.getNextRowPosition().x + 8,
@@ -110,6 +126,7 @@ export class GovernmentDisplayInfo extends ActorGroup {
         rowHeight: 38,
         actorIcons: [selectButton]
       });
+      this.branchRows.push(row);
     }
   }
 
