@@ -72,6 +72,18 @@ export class InGameState extends State {
       }
     });
 
+    ServerEvents.on({
+      eventName: "availableBuildings",
+      parentObject: this,
+      callback: (_, websocket) => {
+        const player = Game.getInstance().getPlayerFromWebsocket(websocket);
+        player.sendNetworkEvent({
+          event: "availableBuildings",
+          buildings: this.cityBuildings
+        });
+      }
+    });
+
     Game.getInstance()
       .getPlayers()
       .forEach((player) => {
