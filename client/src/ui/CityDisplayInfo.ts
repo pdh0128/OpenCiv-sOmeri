@@ -1,9 +1,11 @@
 import { GameImage, SpriteRegion } from "../Assets";
 import { Game } from "../Game";
 import { City } from "../city/City";
+import { NetworkEvents, WebsocketClient } from "../network/Client";
 import { Actor } from "../scene/Actor";
 import { ActorGroup } from "../scene/ActorGroup";
 import { Strings } from "../util/Strings";
+import { Button } from "./Button";
 import { Label } from "./Label";
 import { ListBox } from "./Listbox";
 import { RadioButton } from "./RadioButton";
@@ -13,6 +15,8 @@ export class CityDisplayInfo extends ActorGroup {
 
   private citizenMgmtRadioButtons: RadioButton[];
   private statLabels: Map<string, Label>;
+  private currentlyBuildingLabel: Label;
+  private buildingCatalog: Record<string, any>[];
 
   constructor(city: City) {
     super({
@@ -27,6 +31,7 @@ export class CityDisplayInfo extends ActorGroup {
     this.city = city;
     this.citizenMgmtRadioButtons = [];
     this.statLabels = new Map<string, Label>();
+    this.buildingCatalog = [];
 
     this.initializeStatsWindow();
     this.initializeBuildingsWindow();
@@ -112,7 +117,73 @@ export class CityDisplayInfo extends ActorGroup {
     // Add buildings category for existing city buildings:
     listbox.addCategory("Buildings");
 
+    const currentlyBuilding = this.city.getCurrentlyBuilding();
+    const currentBuildingRow = listbox.addRow({
+      category: "Buildings",
+      text: currentlyBuilding ? `${currentlyBuilding} (${this.city.getProductionProgress()})` : "건설 중인 건물 없음",
+      textX: listbox.getNextRowPosition().x + 8,
+      centerTextY: true,
+      rowHeight: 30
+    });
+    this.currentlyBuildingLabel = currentBuildingRow.getLabel();
+
+    NetworkEvents.on({
+      eventName: "availableBuildings",
+      parentObject: this,
+      callback: (data: any) => {
+        this.buildingCatalog = data["buildings"];
+        this.renderBuildableList(listbox);
+      }
+    });
+
+    NetworkEvents.on({
+      eventName: "updateProductionQueue",
+      parentObject: this,
+      callback: (data: any) => {
+        if (data["cityName"] !== this.city.getName()) return;
+
+        const building = data["currentlyBuilding"];
+        this.currentlyBuildingLabel.setText(building ? `${building} (${data["progress"]})` : "건설 중인 건물 없음");
+      }
+    });
+
+    WebsocketClient.sendMessage({ event: "availableBuildings" });
+
     this.addActor(listbox);
+  }
+
+  private renderBuildableList(listbox: ListBox) {
+    const builtNames = this.city.getBuildings().map((building) => building.getName().toLocaleLowerCase());
+
+    for (const building of this.buildingCatalog) {
+      if (building["production_cost"] <= 0) continue; // e.g. Palace: auto-granted, not manually buildable
+      if (builtNames.includes((building["name"] as string).toLocaleLowerCase())) continue;
+
+      const buildButton = new Button({
+        text: "건설",
+        x: listbox.getNextRowPosition().x + listbox.getWidth() - 70,
+        y: listbox.getNextRowPosition().y + 4,
+        width: 60,
+        height: 30,
+        fontColor: "white",
+        onClicked: () => {
+          WebsocketClient.sendMessage({
+            event: "queueBuilding",
+            cityName: this.city.getName(),
+            buildingName: building["name"]
+          });
+        }
+      });
+
+      listbox.addRow({
+        category: "Buildings",
+        text: `${building["name"]} (${building["production_cost"]})`,
+        textX: listbox.getNextRowPosition().x + 8,
+        centerTextY: true,
+        rowHeight: 38,
+        actorIcons: [buildButton]
+      });
+    }
   }
 
   private getCitizenMgmtRadioButtons() {
@@ -369,5 +440,10 @@ export class CityDisplayInfo extends ActorGroup {
       this.addActor(cultureLabel);
     });
     this.statLabels.set("culture", cultureLabel);
+  }
+
+  public onDestroyed(): void {
+    super.onDestroyed();
+    NetworkEvents.removeCallbacksByParentObject(this);
   }
 }
