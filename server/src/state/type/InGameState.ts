@@ -16,6 +16,8 @@ export class InGameState extends State {
   private totalTurnTime: number;
   private turnTime: number;
   private cityBuildings: Record<string, any>[];
+  private eras: Record<string, any>[];
+  private technologies: Record<string, any>[];
 
   public onInitialize() {
     this.totalTurnTime = 60; //TODO: Allow modification
@@ -26,6 +28,13 @@ export class InGameState extends State {
     const buildingsYMLData = YAML.parse(fs.readFileSync("./config/buildings.yml", "utf-8"));
     //Convert civsData from YAML to JSON:
     this.cityBuildings = JSON.parse(JSON.stringify(buildingsYMLData.buildings));
+
+    // Load eras and technologies from config files
+    const erasYMLData = YAML.parse(fs.readFileSync("./config/eras.yml", "utf-8"));
+    this.eras = JSON.parse(JSON.stringify(erasYMLData.eras));
+
+    const technologiesYMLData = YAML.parse(fs.readFileSync("./config/technologies.yml", "utf-8"));
+    this.technologies = JSON.parse(JSON.stringify(technologiesYMLData.technologies));
 
     // Set loading screen for players
     Game.getInstance()
@@ -186,6 +195,26 @@ export class InGameState extends State {
     for (const building of this.cityBuildings) {
       if ((building.name as string).toLocaleLowerCase() === name.toLocaleLowerCase()) {
         return building;
+      }
+    }
+
+    return undefined;
+  }
+
+  public getEraByName(id: string) {
+    for (const era of this.eras) {
+      if (era.id === id) {
+        return era;
+      }
+    }
+
+    return undefined;
+  }
+
+  public getTechnologyById(id: string) {
+    for (const technology of this.technologies) {
+      if (technology.id === id) {
+        return technology;
       }
     }
 
