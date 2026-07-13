@@ -9,16 +9,16 @@ import YAML from "yaml";
 let playerIndex = 1;
 
 export class LobbyState extends State {
-  private playableCivs: Record<string, any>[];
+  private playableProvinces: Record<string, any>[];
 
   public onInitialize() {
     console.log("Lobby state initialized");
     playerIndex = 1;
 
-    // Load available civilizations from config file
-    const civYAMLData = YAML.parse(fs.readFileSync("./config/civilizations.yml", "utf-8"));
-    //Convert civsData from YAML to JSON:
-    this.playableCivs = JSON.parse(JSON.stringify(civYAMLData.civilizations));
+    // Load available provinces from config file
+    const provinceYAMLData = YAML.parse(fs.readFileSync("./config/provinces.yml", "utf-8"));
+    //Convert provinceData from YAML to JSON:
+    this.playableProvinces = JSON.parse(JSON.stringify(provinceYAMLData.provinces));
 
     ServerEvents.on({
       eventName: "connection",
@@ -46,110 +46,110 @@ export class LobbyState extends State {
     });
 
     ServerEvents.on({
-      eventName: "availableCivs",
+      eventName: "availableProvinces",
       parentObject: this,
       callback: (_, websocket) => {
         const player = Game.getInstance().getPlayerFromWebsocket(websocket);
-        const playableCivs = [];
+        const playableProvinces = [];
 
-        //Extract name and icon_name from playableCivs:
-        for (const civ of this.playableCivs) {
-          playableCivs.push({ name: civ.name, icon_name: civ.icon_name });
+        //Extract name and icon_name from playableProvinces:
+        for (const province of this.playableProvinces) {
+          playableProvinces.push({ name: province.name, icon_name: province.icon_name });
         }
 
         player.sendNetworkEvent({
-          event: "availableCivs",
-          civs: playableCivs
+          event: "availableProvinces",
+          provinces: playableProvinces
         });
       }
     });
 
     ServerEvents.on({
-      eventName: "civInfo",
+      eventName: "provinceInfo",
       parentObject: this,
       callback: (data, websocket) => {
         const player = Game.getInstance().getPlayerFromWebsocket(websocket);
 
-        // Get civ from this.playerCivs JSON list:
-        const civilization = this.getCivByName(data["name"]);
+        // Get province from this.playableProvinces JSON list:
+        const province = this.getProvinceByName(data["name"]);
 
-        if (civilization) {
+        if (province) {
           player.sendNetworkEvent({
-            event: "civInfo",
-            name: civilization.name,
-            icon_name: civilization.icon_name,
-            start_bias_desc: civilization.start_bias_desc,
-            unique_unit_descs: civilization.unique_unit_descs,
-            unique_building_descs: civilization.unique_building_descs,
-            ability_descs: civilization.ability_descs
+            event: "provinceInfo",
+            name: province.name,
+            icon_name: province.icon_name,
+            start_bias_desc: province.start_bias_desc,
+            unique_unit_descs: province.unique_unit_descs,
+            unique_building_descs: province.unique_building_descs,
+            ability_descs: province.ability_descs
           });
         }
       }
     });
 
     ServerEvents.on({
-      eventName: "selectCiv",
+      eventName: "selectProvince",
       parentObject: this,
       callback: (data, websocket) => {
         const player = Game.getInstance().getPlayerFromWebsocket(websocket);
-        //TODO: Check if this civ is already selected.
+        //TODO: Check if this province is already selected.
 
-        const civilization = this.getCivByName(data["name"]);
-        player.setCivilizationData(civilization);
+        const province = this.getProvinceByName(data["name"]);
+        player.setProvinceData(province);
 
         Game.getInstance()
           .getPlayers()
           .forEach((gamePlayer) => {
             gamePlayer.sendNetworkEvent({
-              event: "selectCiv",
-              name: civilization.name,
+              event: "selectProvince",
+              name: province.name,
               playerName: player.getName(),
-              civData: civilization
+              provinceData: province
             });
           });
       }
     });
   }
 
-  public getCivByName(name: string) {
-    let civilization = undefined;
-    for (const civ of this.playableCivs) {
-      if (civ.name === name) {
-        civilization = civ;
+  public getProvinceByName(name: string) {
+    let province = undefined;
+    for (const p of this.playableProvinces) {
+      if (p.name === name) {
+        province = p;
       }
     }
 
-    return civilization;
+    return province;
   }
 
   public onDestroyed() {
-    //Assign players w/o a civ a non-assigned random civilization:
+    //Assign players w/o a province a non-assigned random province:
     Game.getInstance()
       .getPlayers()
       .forEach((player) => {
-        if (!player.getCivilizationData()) {
-          player.setCivilizationData(this.getRandomNonAssignedCiv());
+        if (!player.getProvinceData()) {
+          player.setProvinceData(this.getRandomNonAssignedProvince());
         }
       });
 
     return super.onDestroyed();
   }
 
-  private getRandomNonAssignedCiv(): Record<string, any> {
-    const assignedCivs = [];
+  private getRandomNonAssignedProvince(): Record<string, any> {
+    const assignedProvinces = [];
     Game.getInstance()
       .getPlayers()
       .forEach((player) => {
-        if (player.getCivilizationData()) {
-          assignedCivs.push(player.getCivilizationData());
+        if (player.getProvinceData()) {
+          assignedProvinces.push(player.getProvinceData());
         }
       });
-    const nonAssignedCivs = this.playableCivs.filter((civ) => {
-      return !assignedCivs.includes(civ);
+    const nonAssignedProvinces = this.playableProvinces.filter((province) => {
+      return !assignedProvinces.includes(province);
     });
 
-    //Pick random non-assigned civ:
-    const randomIndex = random.int(0, nonAssignedCivs.length - 1);
-    return nonAssignedCivs[randomIndex];
+    //Pick random non-assigned province:
+    const randomIndex = random.int(0, nonAssignedProvinces.length - 1);
+    return nonAssignedProvinces[randomIndex];
   }
 }
