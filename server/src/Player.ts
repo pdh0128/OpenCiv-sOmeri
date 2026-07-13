@@ -26,6 +26,7 @@ export class Player {
   private currentResearch: string | undefined;
   private researchProgress: number;
   private researchedTechs: Set<string>;
+  private selectedGovernmentBranch: string | undefined;
 
   /**
    * Creates a new player object.
@@ -42,6 +43,7 @@ export class Player {
     this.currentResearch = undefined;
     this.researchProgress = 0;
     this.researchedTechs = new Set<string>();
+    this.selectedGovernmentBranch = undefined;
 
     // Add event listener for when the player disconnects
     this.wsConnection.on("close", (data) => {
@@ -100,6 +102,18 @@ export class Player {
       callback: () => {
         this.processResearchTurn();
         this.sendResearchQueueUpdate();
+      },
+      globalEvent: true
+    });
+
+    ServerEvents.on({
+      eventName: "selectGovernmentBranch",
+      parentObject: this,
+      callback: (data, websocket) => {
+        if (this.wsConnection != websocket) return;
+
+        this.selectGovernmentBranch(data["branchId"]);
+        this.sendGovernmentBranchUpdate();
       },
       globalEvent: true
     });
@@ -294,5 +308,28 @@ export class Player {
 
   public getResearchedTechs(): string[] {
     return Array.from(this.researchedTechs);
+  }
+
+  public selectGovernmentBranch(branchId: string) {
+    // ponytail: getGovernmentBranchById lands on InGameState in Task 4; cast bridges the gap until then, drop it once that method exists.
+    const branchData = (Game.getInstance().getCurrentStateAs<InGameState>() as any).getGovernmentBranchById(
+      branchId
+    );
+    if (!branchData) {
+      return;
+    }
+
+    this.selectedGovernmentBranch = branchId;
+  }
+
+  public getSelectedGovernmentBranch(): string | undefined {
+    return this.selectedGovernmentBranch;
+  }
+
+  public sendGovernmentBranchUpdate() {
+    this.sendNetworkEvent({
+      event: "updateGovernmentBranch",
+      selectedBranch: this.selectedGovernmentBranch
+    });
   }
 }

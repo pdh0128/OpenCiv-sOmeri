@@ -140,3 +140,45 @@ describe('Player research queue', () => {
     expect(player.getResearchProgress()).toBe(0);
   });
 });
+
+describe('Player government branch', () => {
+  const senateData = { id: 'senate', name: '원로원', stat: 'culture', bonus_percent: 20 };
+  const assemblyData = { id: 'assembly', name: '국민의회', stat: 'production', bonus_percent: 20 };
+
+  let getGovernmentBranchById: jest.Mock;
+
+  beforeEach(() => {
+    getGovernmentBranchById = jest.fn().mockImplementation((id: string) => {
+      if (id === 'senate') return senateData;
+      if (id === 'assembly') return assemblyData;
+      return undefined;
+    });
+
+    jest.spyOn(Game, 'getInstance').mockReturnValue({
+      getCurrentStateAs: jest.fn().mockReturnValue({ getGovernmentBranchById })
+    } as any);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('selectGovernmentBranch sets the branch for a valid id', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.selectGovernmentBranch('senate');
+    expect(player.getSelectedGovernmentBranch()).toBe('senate');
+  });
+
+  it('selectGovernmentBranch ignores an unknown branch id', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.selectGovernmentBranch('nonexistent');
+    expect(player.getSelectedGovernmentBranch()).toBeUndefined();
+  });
+
+  it('selectGovernmentBranch allows switching directly between branches, no queue', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.selectGovernmentBranch('senate');
+    player.selectGovernmentBranch('assembly');
+    expect(player.getSelectedGovernmentBranch()).toBe('assembly');
+  });
+});
