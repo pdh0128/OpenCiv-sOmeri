@@ -19,6 +19,8 @@ export class City {
   private foodSurplus: number;
   private territory: Tile[];
   private workedTiles: Tile[];
+  private currentlyBuilding: string | undefined;
+  private productionProgress: number;
 
   /**
    * Creates a new City instance.
@@ -33,6 +35,8 @@ export class City {
     this.buildings = [];
     this.population = 1;
     this.foodSurplus = 0;
+    this.currentlyBuilding = undefined;
+    this.productionProgress = 0;
 
     this.territory = [this.tile];
     for (const adjTile of this.tile.getAdjacentTiles()) {
@@ -54,6 +58,29 @@ export class City {
         }
 
         this.sendStatUpdate(player);
+      }
+    });
+
+    ServerEvents.on({
+      eventName: "queueBuilding",
+      parentObject: this,
+      callback: (data, websocket) => {
+        const player = Game.getInstance().getPlayerFromWebsocket(websocket);
+        if (this.name != data["cityName"] || this.player != player) {
+          return;
+        }
+
+        this.queueBuilding(data["buildingName"]);
+        this.sendProductionQueueUpdate();
+      }
+    });
+
+    ServerEvents.on({
+      eventName: "nextTurn",
+      parentObject: this,
+      callback: () => {
+        this.processProductionTurn();
+        this.sendProductionQueueUpdate();
       }
     });
   }
@@ -102,6 +129,62 @@ export class City {
     });
 
     this.updateWorkedTiles({ sendStatUpdate: true });
+  }
+
+  public queueBuilding(buildingName: string) {
+    const buildingData = Game.getInstance().getCurrentStateAs<InGameState>().getBuildingDataByName(buildingName);
+    if (!buildingData) {
+      return;
+    }
+
+    const alreadyBuilt = this.buildings.some(
+      (building) => (building.name as string).toLocaleLowerCase() === (buildingData.name as string).toLocaleLowerCase()
+    );
+    if (alreadyBuilt) {
+      return;
+    }
+
+    this.currentlyBuilding = buildingData.name;
+  }
+
+  public processProductionTurn() {
+    if (!this.currentlyBuilding) {
+      return;
+    }
+
+    const production = this.getStatline({ asArray: false })["production"];
+    this.productionProgress += production;
+
+    const buildingData = Game.getInstance().getCurrentStateAs<InGameState>().getBuildingDataByName(this.currentlyBuilding);
+    const cost = buildingData["production_cost"];
+
+    if (this.productionProgress >= cost) {
+      const completedName = this.currentlyBuilding;
+      this.productionProgress -= cost;
+      this.currentlyBuilding = undefined;
+      this.addBuilding(completedName);
+    }
+  }
+
+  public sendProductionQueueUpdate() {
+    this.player.sendNetworkEvent({
+      event: "updateProductionQueue",
+      cityName: this.name,
+      currentlyBuilding: this.currentlyBuilding,
+      progress: this.productionProgress
+    });
+  }
+
+  public getCurrentlyBuilding(): string | undefined {
+    return this.currentlyBuilding;
+  }
+
+  public getProductionProgress(): number {
+    return this.productionProgress;
+  }
+
+  public getBuildings(): Record<string, any>[] {
+    return this.buildings;
   }
 
   public sendTerritoryUpdate() { }
