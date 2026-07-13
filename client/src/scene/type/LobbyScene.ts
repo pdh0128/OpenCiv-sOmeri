@@ -3,13 +3,13 @@ import { Game } from "../../Game";
 import { NetworkEvents, WebsocketClient } from "../../network/Client";
 import { Button } from "../../ui/Button";
 import { ListBox } from "../../ui/Listbox";
-import { SelectCivilizationGroup } from "../../ui/SelectCivilizationGroup";
+import { SelectProvinceGroup } from "../../ui/SelectProvinceGroup";
 import { Actor } from "../Actor";
 import { Scene } from "../Scene";
 import { SceneBackground } from "../SceneBackground";
 
 export class LobbyScene extends Scene {
-  private selectCivGroup: SelectCivilizationGroup;
+  private selectProvinceGroup: SelectProvinceGroup;
 
   public onInitialize(): void {
     super.onInitialize();
@@ -29,34 +29,34 @@ export class LobbyScene extends Scene {
 
     this.addActor(
       new Button({
-        text: "Select Civilization",
+        text: "광역주 선택",
         x: Game.getInstance().getWidth() / 2 - 282 / 2,
         y: playerList.getY() + playerList.getHeight() + 10,
         width: 282,
         height: 62,
         fontColor: "white",
         onClicked: () => {
-          if (this.hasActor(this.selectCivGroup)) {
+          if (this.hasActor(this.selectProvinceGroup)) {
             return;
           }
 
-          console.log("Choose civilization");
+          console.log("Choose province");
 
-          if (!this.selectCivGroup || !this.hasActor(this.selectCivGroup)) {
-            this.selectCivGroup = new SelectCivilizationGroup(
+          if (!this.selectProvinceGroup || !this.hasActor(this.selectProvinceGroup)) {
+            this.selectProvinceGroup = new SelectProvinceGroup(
               playerList.getX() + playerList.getWidth() / 2 - 432 / 2,
               Game.getInstance().getHeight() / 2 - 440 / 2,
               432,
               440
             );
-            this.addActor(this.selectCivGroup);
+            this.addActor(this.selectProvinceGroup);
           } else {
-            this.removeActor(this.selectCivGroup);
+            this.removeActor(this.selectProvinceGroup);
           }
         },
 
         disableHoverWhen: () => {
-          return this.hasActor(this.selectCivGroup);
+          return this.hasActor(this.selectProvinceGroup);
         }
       })
     );
@@ -70,7 +70,7 @@ export class LobbyScene extends Scene {
         height: 62,
         fontColor: "white",
         onClicked: () => {
-          if (this.hasActor(this.selectCivGroup)) {
+          if (this.hasActor(this.selectProvinceGroup)) {
             return;
           }
           // TODO: Change text of this button & prevent repeated clicks.
@@ -78,7 +78,7 @@ export class LobbyScene extends Scene {
         },
 
         disableHoverWhen: () => {
-          return this.hasActor(this.selectCivGroup);
+          return this.hasActor(this.selectProvinceGroup);
         }
       })
     );
@@ -92,7 +92,7 @@ export class LobbyScene extends Scene {
         height: 62,
         fontColor: "white",
         onClicked: () => {
-          if (this.hasActor(this.selectCivGroup)) {
+          if (this.hasActor(this.selectProvinceGroup)) {
             return;
           }
 
@@ -101,7 +101,7 @@ export class LobbyScene extends Scene {
         },
 
         disableHoverWhen: () => {
-          return this.hasActor(this.selectCivGroup);
+          return this.hasActor(this.selectProvinceGroup);
         }
       })
     );
@@ -134,9 +134,9 @@ export class LobbyScene extends Scene {
 
         for (let i = 0; i < players.length; i++) {
           const playerName = players[i]["name"];
-          let civIcon = SpriteRegion.UNKNOWN_ICON;
-          if ("civData" in players[i]) {
-            civIcon = SpriteRegion[players[i]["civData"]["icon_name"]];
+          let provinceIcon = SpriteRegion.UNKNOWN_ICON;
+          if ("provinceData" in players[i]) {
+            provinceIcon = SpriteRegion[players[i]["provinceData"]["icon_name"]];
           }
 
           const currentRow = playerList.addRow({
@@ -146,7 +146,7 @@ export class LobbyScene extends Scene {
           currentRow.addActor(
             new Actor({
               image: Game.getInstance().getImage(GameImage.SPRITESHEET),
-              spriteRegion: civIcon,
+              spriteRegion: provinceIcon,
               x: currentRow.getX() + 8,
               y: currentRow.getY() - 32 / 2 + currentRow.getHeight() / 2,
               width: 32,
@@ -179,7 +179,7 @@ export class LobbyScene extends Scene {
     });
 
     NetworkEvents.on({
-      eventName: "selectCiv",
+      eventName: "selectProvince",
       parentObject: this,
       callback: (data) => {
         for (const row of playerList.getRows()) {
@@ -192,7 +192,7 @@ export class LobbyScene extends Scene {
               continue;
             }
 
-            rowActor.setSpriteRegion(SpriteRegion[data["civData"]["icon_name"]]);
+            rowActor.setSpriteRegion(SpriteRegion[data["provinceData"]["icon_name"]]);
           }
         }
       }

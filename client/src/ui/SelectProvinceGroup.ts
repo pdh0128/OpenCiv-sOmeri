@@ -6,10 +6,10 @@ import { ActorGroup } from "../scene/ActorGroup";
 import { Button } from "./Button";
 import { Label } from "./Label";
 
-export class SelectCivilizationGroup extends ActorGroup {
+export class SelectProvinceGroup extends ActorGroup {
   private titleLabel: Label;
-  private selectCivActors: Actor[];
-  private civInformationActors: Actor[];
+  private selectProvinceActors: Actor[];
+  private provinceInformationActors: Actor[];
 
   constructor(x: number, y: number, width: number, height: number) {
     super({
@@ -19,8 +19,8 @@ export class SelectCivilizationGroup extends ActorGroup {
       height: height
     });
 
-    this.selectCivActors = [];
-    this.civInformationActors = [];
+    this.selectProvinceActors = [];
+    this.provinceInformationActors = [];
 
     this.addActor(
       new Actor({
@@ -34,17 +34,17 @@ export class SelectCivilizationGroup extends ActorGroup {
       })
     );
 
-    this.listAvailableCivs();
+    this.listAvailableProvinces();
 
     NetworkEvents.on({
-      eventName: "availableCivs",
+      eventName: "availableProvinces",
       parentObject: this,
       callback: (data) => {
         let xOffsset = 0;
         let yOffset = 1;
 
-        // For each civ JSON object
-        for (const civJSON of data["civs"]) {
+        // For each province JSON object
+        for (const provinceJSON of data["provinces"]) {
           // Calculate the X and Y coordinates of the icon and add it
           let iconX = this.x + 68 * xOffsset + 14;
 
@@ -55,8 +55,8 @@ export class SelectCivilizationGroup extends ActorGroup {
 
           let iconY = this.y + 68 * yOffset;
 
-          const selectCivButton = new Button({
-            icon: SpriteRegion[civJSON["icon_name"]],
+          const selectProvinceButton = new Button({
+            icon: SpriteRegion[provinceJSON["icon_name"]],
             iconOnly: true,
             x: iconX,
             y: iconY,
@@ -64,32 +64,30 @@ export class SelectCivilizationGroup extends ActorGroup {
             height: 64,
             onClicked: () => {
               WebsocketClient.sendMessage({
-                event: "civInfo",
-                name: civJSON["name"]
+                event: "provinceInfo",
+                name: provinceJSON["name"]
               });
             },
-            onMouseEnter: () => {
-              console.log("Mouse enter");
-            }
+            onMouseEnter: () => {}
           });
 
-          this.selectCivActors.push(selectCivButton);
-          this.addActor(selectCivButton);
+          this.selectProvinceActors.push(selectProvinceButton);
+          this.addActor(selectProvinceButton);
           xOffsset++;
         }
       }
     });
 
     NetworkEvents.on({
-      eventName: "civInfo",
+      eventName: "provinceInfo",
       parentObject: this,
       callback: (data) => {
-        this.displayCivInformation(data);
+        this.displayProvinceInformation(data);
       }
     });
 
     NetworkEvents.on({
-      eventName: "selectCiv",
+      eventName: "selectProvince",
       parentObject: this,
       callback: () => {
         Game.getInstance().getCurrentScene().removeActor(this);
@@ -97,16 +95,16 @@ export class SelectCivilizationGroup extends ActorGroup {
     });
   }
 
-  public listAvailableCivs() {
-    // Remove civ-information actors
-    for (const actor of this.civInformationActors) {
+  public listAvailableProvinces() {
+    // Remove province-information actors
+    for (const actor of this.provinceInformationActors) {
       this.removeActor(actor);
     }
 
-    const titleText = "Select a Civilization";
+    const titleText = "광역주 선택";
     if (!this.titleLabel) {
       this.titleLabel = new Label({
-        text: "Select a Civilization",
+        text: titleText,
         font: "20px serif",
         fontColor: "white"
       });
@@ -131,26 +129,26 @@ export class SelectCivilizationGroup extends ActorGroup {
       }
     });
 
-    this.selectCivActors.push(closeButton);
+    this.selectProvinceActors.push(closeButton);
     this.addActor(closeButton);
 
-    WebsocketClient.sendMessage({ event: "availableCivs" });
+    WebsocketClient.sendMessage({ event: "availableProvinces" });
   }
 
-  public async displayCivInformation(data: JSON) {
+  public async displayProvinceInformation(data: JSON) {
     // Rename title label:
     this.titleLabel.setText(data["name"]);
     this.titleLabel.conformSize().then(() => {
       this.titleLabel.setPosition(this.x + this.width / 2 - this.titleLabel.getWidth() / 2, this.y + 12);
     });
 
-    // Remove select civ actors:
-    for (const actor of this.selectCivActors) {
+    // Remove select province actors:
+    for (const actor of this.selectProvinceActors) {
       this.removeActor(actor);
     }
 
-    // Display civ information:
-    const civIcon = new Actor({
+    // Display province information:
+    const provinceIcon = new Actor({
       image: Game.getInstance().getImage(GameImage.SPRITESHEET),
       spriteRegion: SpriteRegion[data["icon_name"]],
       x: this.x + this.width / 2 - 32 / 2,
@@ -158,8 +156,8 @@ export class SelectCivilizationGroup extends ActorGroup {
       width: 32,
       height: 32
     });
-    this.addActor(civIcon);
-    this.civInformationActors.push(civIcon);
+    this.addActor(provinceIcon);
+    this.provinceInformationActors.push(provinceIcon);
 
     const informationLabels = [];
 
@@ -174,7 +172,7 @@ export class SelectCivilizationGroup extends ActorGroup {
 
     await startBiasLabel.conformSize();
 
-    this.civInformationActors.push(startBiasLabel);
+    this.provinceInformationActors.push(startBiasLabel);
     informationLabels.push(startBiasLabel);
     this.addActor(startBiasLabel);
 
@@ -189,11 +187,11 @@ export class SelectCivilizationGroup extends ActorGroup {
 
     await uniqueUnitDescLabel.conformSize();
 
-    this.civInformationActors.push(uniqueUnitDescLabel);
+    this.provinceInformationActors.push(uniqueUnitDescLabel);
     this.addActor(uniqueUnitDescLabel);
 
     for (const uniqueUnitDesc of data["unique_unit_descs"]) {
-      const lastLabel = this.civInformationActors[this.civInformationActors.length - 1];
+      const lastLabel = this.provinceInformationActors[this.provinceInformationActors.length - 1];
 
       const unitLabel = new Label({
         text: "* " + uniqueUnitDesc,
@@ -206,12 +204,12 @@ export class SelectCivilizationGroup extends ActorGroup {
 
       await unitLabel.conformSize();
 
-      this.civInformationActors.push(unitLabel);
+      this.provinceInformationActors.push(unitLabel);
       this.addActor(unitLabel);
     }
 
     if ("unique_building_descs" in data) {
-      const lastLabel = this.civInformationActors[this.civInformationActors.length - 1];
+      const lastLabel = this.provinceInformationActors[this.provinceInformationActors.length - 1];
 
       const uniqueBuildingsDescLabel = new Label({
         text: "Unique Buildings:",
@@ -224,11 +222,11 @@ export class SelectCivilizationGroup extends ActorGroup {
 
       await uniqueBuildingsDescLabel.conformSize();
 
-      this.civInformationActors.push(uniqueBuildingsDescLabel);
+      this.provinceInformationActors.push(uniqueBuildingsDescLabel);
       this.addActor(uniqueBuildingsDescLabel);
 
       for (const buildingDesc of data["unique_building_descs"] as []) {
-        const lastLabel = this.civInformationActors[this.civInformationActors.length - 1];
+        const lastLabel = this.provinceInformationActors[this.provinceInformationActors.length - 1];
 
         const abilityLabel = new Label({
           text: "* " + buildingDesc,
@@ -241,12 +239,12 @@ export class SelectCivilizationGroup extends ActorGroup {
 
         await abilityLabel.conformSize();
 
-        this.civInformationActors.push(abilityLabel);
+        this.provinceInformationActors.push(abilityLabel);
         this.addActor(abilityLabel);
       }
     }
 
-    const lastLabel = this.civInformationActors[this.civInformationActors.length - 1];
+    const lastLabel = this.provinceInformationActors[this.provinceInformationActors.length - 1];
 
     const uniqueAbilityDescLabel = new Label({
       text: "Special Abilities:",
@@ -259,11 +257,11 @@ export class SelectCivilizationGroup extends ActorGroup {
 
     await uniqueAbilityDescLabel.conformSize();
 
-    this.civInformationActors.push(uniqueAbilityDescLabel);
+    this.provinceInformationActors.push(uniqueAbilityDescLabel);
     this.addActor(uniqueAbilityDescLabel);
 
     for (const abilityDesc of data["ability_descs"]) {
-      const lastLabel = this.civInformationActors[this.civInformationActors.length - 1];
+      const lastLabel = this.provinceInformationActors[this.provinceInformationActors.length - 1];
 
       const abilityLabel = new Label({
         text: "* " + abilityDesc,
@@ -276,7 +274,7 @@ export class SelectCivilizationGroup extends ActorGroup {
 
       await abilityLabel.conformSize();
 
-      this.civInformationActors.push(abilityLabel);
+      this.provinceInformationActors.push(abilityLabel);
       this.addActor(abilityLabel);
     }
 
@@ -289,14 +287,11 @@ export class SelectCivilizationGroup extends ActorGroup {
       width: 150,
       height: 50,
       onClicked: () => {
-        // Select this civilization and close this window:
-        // Fire event for lobby to handle this. Or network event..?
-        //Game.getCurrentScene().removeActor(this);
-        WebsocketClient.sendMessage({ event: "selectCiv", name: data["name"] });
+        WebsocketClient.sendMessage({ event: "selectProvince", name: data["name"] });
       }
     });
 
-    this.civInformationActors.push(selectButton);
+    this.provinceInformationActors.push(selectButton);
     this.addActor(selectButton);
 
     // Add back button:
@@ -308,12 +303,12 @@ export class SelectCivilizationGroup extends ActorGroup {
       width: 150,
       height: 50,
       onClicked: () => {
-        // Clear current civ information actors, restore select civ buttons:
-        this.listAvailableCivs();
+        // Clear current province information actors, restore select province buttons:
+        this.listAvailableProvinces();
       }
     });
 
-    this.civInformationActors.push(backButton);
+    this.provinceInformationActors.push(backButton);
     this.addActor(backButton);
   }
 
