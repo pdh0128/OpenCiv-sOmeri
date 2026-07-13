@@ -1,10 +1,15 @@
 buildings:
   - name: Palace
     asset_name: BUILDING_PALACE
+    production_cost: 0
     stats:
       - science: 3
       - production: 3
       - gold: 2
       - defense: 2
       - culture: 1
-    
+  - name: Granary
+    asset_name: BUILDING_PALACE
+    production_cost: 10
+    stats:
+      - food: 2
