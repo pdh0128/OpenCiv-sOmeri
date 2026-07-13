@@ -1,12 +1,15 @@
 import { GameImage, SpriteRegion } from "../Assets";
 import { Game } from "../Game";
 import { NetworkEvents } from "../network/Client";
+import { InGameScene } from "../scene/type/InGameScene";
 import { Actor } from "../scene/Actor";
 import { ActorGroup } from "../scene/ActorGroup";
 import { Label } from "./Label";
+import { ResearchDisplayInfo } from "./ResearchDisplayInfo";
 
 export class StatusBar extends ActorGroup {
   private statusBarActor: Actor;
+  private researchDisplayInfo: ResearchDisplayInfo;
 
   private currentTurnText: string; //when currentTurnLabel may not be initalized yet
   private currentTurnLabel: Label;
@@ -89,7 +92,25 @@ export class StatusBar extends ActorGroup {
     this.scienceDescLabel = new Label({
       text: "Science:",
       font: "16px serif",
-      fontColor: "white"
+      fontColor: "white",
+      onClick: () => {
+        const scene = Game.getInstance().getCurrentSceneAs<InGameScene>();
+
+        if (this.researchDisplayInfo) {
+          scene.removeActor(this.researchDisplayInfo);
+          this.researchDisplayInfo = undefined;
+          return;
+        }
+
+        this.researchDisplayInfo = new ResearchDisplayInfo(
+          scene.getClientPlayer(),
+          Game.getInstance().getWidth() / 2 - 216,
+          Game.getInstance().getHeight() / 2 - 220,
+          432,
+          440
+        );
+        scene.addActor(this.researchDisplayInfo);
+      }
     });
     await this.scienceDescLabel.conformSize();
     this.scienceDescLabel.setPosition(this.x + 1, 3);
