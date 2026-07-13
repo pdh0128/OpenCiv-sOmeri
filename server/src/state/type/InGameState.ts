@@ -201,7 +201,7 @@ export class InGameState extends State {
     return undefined;
   }
 
-  public getEraByName(id: string) {
+  public getEraById(id: string) {
     for (const era of this.eras) {
       if (era.id === id) {
         return era;
