@@ -10,6 +10,7 @@ export class AbstractPlayer {
   private currentResearch: string | undefined;
   private researchProgress: number;
   private researchedTechs: string[];
+  private selectedGovernmentBranch: string | undefined;
 
   constructor(playerJSON: JSON) {
     this.provinceData = playerJSON["provinceData"];
@@ -17,6 +18,7 @@ export class AbstractPlayer {
     this.currentResearch = undefined;
     this.researchProgress = 0;
     this.researchedTechs = [];
+    this.selectedGovernmentBranch = undefined;
 
     NetworkEvents.on({
       eventName: "updateResearchQueue",
@@ -25,6 +27,14 @@ export class AbstractPlayer {
         this.currentResearch = data["currentResearch"];
         this.researchProgress = data["progress"];
         this.researchedTechs = data["researchedTechs"];
+      }
+    });
+
+    NetworkEvents.on({
+      eventName: "updateGovernmentBranch",
+      parentObject: this,
+      callback: (data: any) => {
+        this.selectedGovernmentBranch = data["selectedBranch"];
       }
     });
   }
@@ -62,6 +72,10 @@ export class AbstractPlayer {
 
   public getResearchedTechs(): string[] {
     return this.researchedTechs;
+  }
+
+  public getSelectedGovernmentBranch(): string | undefined {
+    return this.selectedGovernmentBranch;
   }
 
   protected units: Unit[] = [];
