@@ -19,7 +19,7 @@ export class Player {
   /** The callback to execute when the player resizes their window. */
   private resizeWindowCallback: () => void;
   private requestedNextTurn: boolean;
-  private civilizationData: Record<string, any>;
+  private provinceData: Record<string, any>;
   private cities: City[];
   private units: Unit[];
 
@@ -108,8 +108,8 @@ export class Player {
     return this.requestedNextTurn;
   }
 
-  public setCivilizationData(civilizationData: Record<string, any>) {
-    this.civilizationData = civilizationData;
+  public setProvinceData(provinceData: Record<string, any>) {
+    this.provinceData = provinceData;
   }
 
   /**
@@ -158,13 +158,13 @@ export class Player {
   public toJSON() {
     return {
       name: this.name,
-      civData: this.civilizationData,
+      provinceData: this.provinceData,
       requestedNextTurn: this.requestedNextTurn
     };
   }
 
-  public getCivilizationData() {
-    return this.civilizationData;
+  public getProvinceData() {
+    return this.provinceData;
   }
 
   /**
@@ -172,7 +172,7 @@ export class Player {
    */
   public getNextAvailableCityName(): string {
     const eixtingNames = [];
-    const allCityNames = this.civilizationData["cities"];
+    const allCityNames = this.provinceData["cities"];
     for (const city of this.cities) {
       eixtingNames.push(city.getName());
     }
