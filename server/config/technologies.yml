@@ -1,0 +1,53 @@
+technologies:
+  - id: irrigation
+    name: 관개농법
+    era: chaos
+    prerequisites: []
+  - id: writing
+    name: sOmeri 문자
+    era: founding
+    prerequisites: [irrigation]
+  - id: currency
+    name: 표준 화폐
+    era: founding
+    prerequisites: [irrigation]
+  - id: administration
+    name: 호적·도량형
+    era: unification
+    prerequisites: [writing]
+  - id: seafaring
+    name: 원양 항해
+    era: unification
+    prerequisites: [currency]
+  - id: philosophy
+    name: 문명신앙
+    era: great_empire
+    prerequisites: [administration]
+  - id: masonry
+    name: 왕도 건설
+    era: great_empire
+    prerequisites: [seafaring]
+  - id: banking
+    name: 신용 거래
+    era: golden_age
+    prerequisites: [philosophy, masonry]
+  - id: education
+    name: 의무교육
+    era: restoration
+    prerequisites: [banking]
+  - id: scientific_method
+    name: 과학혁명
+    era: enlightenment
+    prerequisites: [education]
+  - id: industrialization
+    name: 산업화
+    era: industrial
+    prerequisites: [scientific_method]
+  - id: electricity
+    name: 전신·통신
+    era: industrial
+    prerequisites: [industrialization]
+  - id: computing
+    name: 정보공학
+    era: modern
+    prerequisites: [electricity]

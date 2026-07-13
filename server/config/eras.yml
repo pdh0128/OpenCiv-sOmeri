@@ -1,0 +1,31 @@
+eras:
+  - id: chaos
+    name: 혼돈시대
+    order: 1
+  - id: founding
+    name: 건국시대
+    order: 2
+  - id: unification
+    name: 통일시대
+    order: 3
+  - id: great_empire
+    name: 대제국시대
+    order: 4
+  - id: golden_age
+    name: 황금시대
+    order: 5
+  - id: dark_age
+    name: 암흑시대
+    order: 6
+  - id: restoration
+    name: 중흥시대
+    order: 7
+  - id: enlightenment
+    name: 계몽시대
+    order: 8
+  - id: industrial
+    name: 산업혁명시대
+    order: 9
+  - id: modern
+    name: 현대·우주시대
+    order: 10
