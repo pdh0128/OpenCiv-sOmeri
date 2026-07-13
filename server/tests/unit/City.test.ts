@@ -24,6 +24,13 @@ describe('City production queue', () => {
     stats: [{ food: 2 }]
   };
 
+  const palaceData = {
+    name: 'Palace',
+    asset_name: 'BUILDING_PALACE',
+    production_cost: 0,
+    stats: [{ science: 3 }, { production: 3 }, { gold: 2 }, { defense: 2 }, { culture: 1 }]
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
 
@@ -52,6 +59,7 @@ describe('City production queue', () => {
 
     getBuildingDataByName = jest.fn().mockImplementation((name: string) => {
       if (name.toLowerCase() === 'granary') return granaryData;
+      if (name.toLowerCase() === 'palace') return palaceData;
       return undefined;
     });
 
@@ -77,6 +85,11 @@ describe('City production queue', () => {
   it('queueBuilding ignores a building that is already built', () => {
     city.addBuilding('Granary');
     city.queueBuilding('Granary');
+    expect(city.getCurrentlyBuilding()).toBeUndefined();
+  });
+
+  it('queueBuilding rejects a building with production_cost <= 0, like Palace, even if not yet built', () => {
+    city.queueBuilding('Palace');
     expect(city.getCurrentlyBuilding()).toBeUndefined();
   });
 

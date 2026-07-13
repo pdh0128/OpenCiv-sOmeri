@@ -137,6 +137,12 @@ export class City {
       return;
     }
 
+    // Buildings with no production cost (e.g. Palace) are auto-granted only
+    // (see UnitActions.ts) and must never be queued manually.
+    if (buildingData.production_cost <= 0) {
+      return;
+    }
+
     const alreadyBuilt = this.buildings.some(
       (building) => (building.name as string).toLocaleLowerCase() === (buildingData.name as string).toLocaleLowerCase()
     );
@@ -148,6 +154,9 @@ export class City {
   }
 
   public processProductionTurn() {
+    // Intentionally does NOT reset productionProgress: any leftover overflow from a
+    // just-completed build should carry forward untouched while the queue sits empty,
+    // rather than being discarded. Do not "fix" this into a reset.
     if (!this.currentlyBuilding) {
       return;
     }
