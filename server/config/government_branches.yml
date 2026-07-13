@@ -1,0 +1,13 @@
+government_branches:
+  - id: senate
+    name: 원로원
+    stat: culture
+    bonus_percent: 20
+  - id: assembly
+    name: 국민의회
+    stat: production
+    bonus_percent: 20
+  - id: tech_committee
+    name: 기술위원회
+    stat: science
+    bonus_percent: 20
