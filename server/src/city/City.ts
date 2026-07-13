@@ -143,6 +143,10 @@ export class City {
       return;
     }
 
+    if (buildingData.unlocked_by && !this.player.hasResearchedTech(buildingData.unlocked_by)) {
+      return;
+    }
+
     const alreadyBuilt = this.buildings.some(
       (building) => (building.name as string).toLocaleLowerCase() === (buildingData.name as string).toLocaleLowerCase()
     );

@@ -21,6 +21,7 @@ describe('City production queue', () => {
     name: 'Granary',
     asset_name: 'BUILDING_PALACE',
     production_cost: 12,
+    unlocked_by: 'irrigation',
     stats: [{ food: 2 }]
   };
 
@@ -50,7 +51,8 @@ describe('City production queue', () => {
     mockPlayer = {
       getName: jest.fn().mockReturnValue('TestPlayer'),
       getNextAvailableCityName: jest.fn().mockReturnValue('TestCity'),
-      sendNetworkEvent: jest.fn()
+      sendNetworkEvent: jest.fn(),
+      hasResearchedTech: jest.fn().mockReturnValue(true)
     } as unknown as jest.Mocked<Player>;
 
     jest.spyOn(GameMap, 'getInstance').mockReturnValue({
@@ -91,6 +93,15 @@ describe('City production queue', () => {
   it('queueBuilding rejects a building with production_cost <= 0, like Palace, even if not yet built', () => {
     city.queueBuilding('Palace');
     expect(city.getCurrentlyBuilding()).toBeUndefined();
+  });
+
+  it('queueBuilding rejects a building locked behind unresearched technology', () => {
+    (mockPlayer.hasResearchedTech as jest.Mock).mockReturnValue(false);
+
+    city.queueBuilding('Granary');
+
+    expect(city.getCurrentlyBuilding()).toBeUndefined();
+    expect(mockPlayer.hasResearchedTech).toHaveBeenCalledWith('irrigation');
   });
 
   it('processProductionTurn accumulates progress without completing below cost', () => {
