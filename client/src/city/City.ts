@@ -35,6 +35,8 @@ export class City extends ActorGroup {
   private buildings: Buidling[];
   private stats: Map<string, number>;
   private statsPresent: boolean;
+  private currentlyBuilding: string | undefined;
+  private productionProgress: number;
 
   constructor(options: CityOptions) {
     super({ x: 0, y: 0, z: 2, width: 0, height: 0 });
@@ -47,6 +49,8 @@ export class City extends ActorGroup {
     this.buildings = [];
     this.stats = new Map<string, number>();
     this.statsPresent = false;
+    this.currentlyBuilding = undefined;
+    this.productionProgress = 0;
 
     this.innerBorderColor = this.player.getProvinceData()["inside_border_color"];
     this.outsideBorderColor = this.player.getProvinceData()["outside_border_color"];
@@ -148,6 +152,17 @@ export class City extends ActorGroup {
         this.statsPresent = true;
       }
     });
+
+    NetworkEvents.on({
+      eventName: "updateProductionQueue",
+      parentObject: this,
+      callback: (data: any) => {
+        if (data["cityName"] !== this.name) return;
+
+        this.currentlyBuilding = data["currentlyBuilding"];
+        this.productionProgress = data["progress"];
+      }
+    });
   }
 
   public hasStats(): boolean {
@@ -186,5 +201,13 @@ export class City extends ActorGroup {
 
   public getWorkedTiles() {
     return this.workedTiles;
+  }
+
+  public getCurrentlyBuilding(): string | undefined {
+    return this.currentlyBuilding;
+  }
+
+  public getProductionProgress(): number {
+    return this.productionProgress;
   }
 }
