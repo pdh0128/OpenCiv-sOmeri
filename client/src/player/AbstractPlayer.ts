@@ -5,10 +5,10 @@ import { City } from "../city/City";
 
 export class AbstractPlayer {
   private name: string;
-  private civData: JSON;
+  private provinceData: JSON;
 
   constructor(playerJSON: JSON) {
-    this.civData = playerJSON["civData"];
+    this.provinceData = playerJSON["provinceData"];
     this.name = playerJSON["name"];
   }
 
@@ -31,8 +31,8 @@ export class AbstractPlayer {
     this.name = name;
   }
 
-  public getCivilizationData() {
-    return this.civData;
+  public getProvinceData() {
+    return this.provinceData;
   }
 
   protected units: Unit[] = [];
