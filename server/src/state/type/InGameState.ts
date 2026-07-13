@@ -18,6 +18,7 @@ export class InGameState extends State {
   private cityBuildings: Record<string, any>[];
   private eras: Record<string, any>[];
   private technologies: Record<string, any>[];
+  private governmentBranches: Record<string, any>[];
 
   public onInitialize() {
     this.totalTurnTime = 60; //TODO: Allow modification
@@ -35,6 +36,9 @@ export class InGameState extends State {
 
     const technologiesYMLData = YAML.parse(fs.readFileSync("./config/technologies.yml", "utf-8"));
     this.technologies = JSON.parse(JSON.stringify(technologiesYMLData.technologies));
+
+    const governmentBranchesYMLData = YAML.parse(fs.readFileSync("./config/government_branches.yml", "utf-8"));
+    this.governmentBranches = JSON.parse(JSON.stringify(governmentBranchesYMLData.government_branches));
 
     // Set loading screen for players
     Game.getInstance()
@@ -101,6 +105,18 @@ export class InGameState extends State {
         player.sendNetworkEvent({
           event: "availableTechnologies",
           technologies: this.technologies
+        });
+      }
+    });
+
+    ServerEvents.on({
+      eventName: "availableGovernmentBranches",
+      parentObject: this,
+      callback: (_, websocket) => {
+        const player = Game.getInstance().getPlayerFromWebsocket(websocket);
+        player.sendNetworkEvent({
+          event: "availableGovernmentBranches",
+          branches: this.governmentBranches
         });
       }
     });
@@ -227,6 +243,16 @@ export class InGameState extends State {
     for (const technology of this.technologies) {
       if (technology.id === id) {
         return technology;
+      }
+    }
+
+    return undefined;
+  }
+
+  public getGovernmentBranchById(id: string) {
+    for (const branch of this.governmentBranches) {
+      if (branch.id === id) {
+        return branch;
       }
     }
 
