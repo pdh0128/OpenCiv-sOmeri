@@ -93,6 +93,18 @@ export class InGameState extends State {
       }
     });
 
+    ServerEvents.on({
+      eventName: "availableTechnologies",
+      parentObject: this,
+      callback: (_, websocket) => {
+        const player = Game.getInstance().getPlayerFromWebsocket(websocket);
+        player.sendNetworkEvent({
+          event: "availableTechnologies",
+          technologies: this.technologies
+        });
+      }
+    });
+
     Game.getInstance()
       .getPlayers()
       .forEach((player) => {
