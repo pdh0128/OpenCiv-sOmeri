@@ -196,6 +196,15 @@ export class City {
     return this.productionProgress;
   }
 
+  private getGovernmentBonus() {
+    const branchId = this.player.getSelectedGovernmentBranch();
+    if (!branchId) {
+      return undefined;
+    }
+
+    return Game.getInstance().getCurrentStateAs<InGameState>().getGovernmentBranchById(branchId);
+  }
+
   public getBuildings(): Record<string, any>[] {
     return this.buildings;
   }
@@ -268,6 +277,15 @@ export class City {
         }
       }
 
+      const governmentBonus = this.getGovernmentBonus();
+      if (governmentBonus) {
+        for (const cityStat of cityStats) {
+          if (Object.keys(cityStat)[0] === governmentBonus.stat) {
+            cityStat[governmentBonus.stat] *= 1 + governmentBonus.bonus_percent / 100;
+          }
+        }
+      }
+
       return cityStats;
     }
 
@@ -306,6 +324,11 @@ export class City {
           cityStats[statType] += statValue;
         }
       }
+    }
+
+    const governmentBonus = this.getGovernmentBonus();
+    if (governmentBonus && cityStats.hasOwnProperty(governmentBonus.stat)) {
+      cityStats[governmentBonus.stat] *= 1 + governmentBonus.bonus_percent / 100;
     }
 
     return cityStats;

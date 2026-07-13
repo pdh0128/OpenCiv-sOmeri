@@ -16,6 +16,7 @@ describe('City production queue', () => {
   let mockWorkedTile: jest.Mocked<Tile>;
   let mockPlayer: jest.Mocked<Player>;
   let getBuildingDataByName: jest.Mock;
+  let getGovernmentBranchById: jest.Mock;
 
   const granaryData = {
     name: 'Granary',
@@ -52,7 +53,8 @@ describe('City production queue', () => {
       getName: jest.fn().mockReturnValue('TestPlayer'),
       getNextAvailableCityName: jest.fn().mockReturnValue('TestCity'),
       sendNetworkEvent: jest.fn(),
-      hasResearchedTech: jest.fn().mockReturnValue(true)
+      hasResearchedTech: jest.fn().mockReturnValue(true),
+      getSelectedGovernmentBranch: jest.fn().mockReturnValue(undefined)
     } as unknown as jest.Mocked<Player>;
 
     jest.spyOn(GameMap, 'getInstance').mockReturnValue({
@@ -65,8 +67,10 @@ describe('City production queue', () => {
       return undefined;
     });
 
+    getGovernmentBranchById = jest.fn().mockReturnValue(undefined);
+
     jest.spyOn(Game, 'getInstance').mockReturnValue({
-      getCurrentStateAs: jest.fn().mockReturnValue({ getBuildingDataByName })
+      getCurrentStateAs: jest.fn().mockReturnValue({ getBuildingDataByName, getGovernmentBranchById })
     } as any);
 
     jest.spyOn(ServerEvents, 'on').mockImplementation(() => {});
@@ -102,6 +106,25 @@ describe('City production queue', () => {
 
     expect(city.getCurrentlyBuilding()).toBeUndefined();
     expect(mockPlayer.hasResearchedTech).toHaveBeenCalledWith('irrigation');
+  });
+
+  it('applies the government branch bonus percentage to its associated stat', () => {
+    (mockPlayer.getSelectedGovernmentBranch as jest.Mock).mockReturnValue('senate');
+    getGovernmentBranchById.mockReturnValue({ id: 'senate', name: '원로원', stat: 'culture', bonus_percent: 20 });
+
+    city.addBuilding('Palace'); // grants culture: 1
+
+    const stats = city.getStatline({ asArray: false });
+
+    expect(stats["culture"]).toBeCloseTo(1.2);
+  });
+
+  it('leaves stats unchanged when no government branch is selected', () => {
+    city.addBuilding('Palace'); // grants culture: 1
+
+    const stats = city.getStatline({ asArray: false });
+
+    expect(stats["culture"]).toBe(1);
   });
 
   it('processProductionTurn accumulates progress without completing below cost', () => {
