@@ -11,5 +11,6 @@ buildings:
   - name: Granary
     asset_name: BUILDING_PALACE
     production_cost: 10
+    unlocked_by: irrigation
     stats:
       - food: 2

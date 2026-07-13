@@ -30,4 +30,14 @@ describe('buildings.yml', () => {
     expect(granary!.production_cost).toBeGreaterThan(0);
     expect(Array.isArray(granary!.stats)).toBe(true);
   });
+
+  it('gates Granary behind researching irrigation', () => {
+    const granary = buildings.find((b) => b.name === 'Granary');
+    expect(granary!.unlocked_by).toBe('irrigation');
+  });
+
+  it('leaves Palace with no unlock requirement (auto-granted)', () => {
+    const palace = buildings.find((b) => b.name === 'Palace');
+    expect(palace!.unlocked_by).toBeUndefined();
+  });
 });

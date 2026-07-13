@@ -73,4 +73,11 @@ describe('eras.yml and technologies.yml', () => {
     const darkAgeTechs = technologies.filter((t) => t.era === 'dark_age');
     expect(darkAgeTechs.length).toBe(0);
   });
+
+  it('gives every technology a positive numeric research_cost', () => {
+    for (const tech of technologies) {
+      expect(typeof tech.research_cost).toBe('number');
+      expect(tech.research_cost).toBeGreaterThan(0);
+    }
+  });
 });
