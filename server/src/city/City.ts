@@ -206,6 +206,17 @@ export class City {
     return Game.getInstance().getCurrentStateAs<InGameState>().getGovernmentBranchById(branchId);
   }
 
+  private getEraMultiplier(): number {
+    const eraStatus = this.player.getEraStatus();
+    if (eraStatus === "golden") {
+      return 1.1;
+    }
+    if (eraStatus === "dark") {
+      return 0.9;
+    }
+    return 1;
+  }
+
   public getBuildings(): Record<string, any>[] {
     return this.buildings;
   }
@@ -287,6 +298,16 @@ export class City {
         }
       }
 
+      const eraMultiplier = this.getEraMultiplier();
+      if (eraMultiplier !== 1) {
+        for (const cityStat of cityStats) {
+          const statType = Object.keys(cityStat)[0];
+          if (["science", "gold", "production", "faith", "culture"].includes(statType)) {
+            cityStat[statType] *= eraMultiplier;
+          }
+        }
+      }
+
       return cityStats;
     }
 
@@ -330,6 +351,15 @@ export class City {
     const governmentBonus = this.getGovernmentBonus();
     if (governmentBonus && cityStats.hasOwnProperty(governmentBonus.stat)) {
       cityStats[governmentBonus.stat] *= 1 + governmentBonus.bonus_percent / 100;
+    }
+
+    const eraMultiplier = this.getEraMultiplier();
+    if (eraMultiplier !== 1) {
+      for (const statType of ["science", "gold", "production", "faith", "culture"]) {
+        if (cityStats.hasOwnProperty(statType)) {
+          cityStats[statType] *= eraMultiplier;
+        }
+      }
     }
 
     return cityStats;

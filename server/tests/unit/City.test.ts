@@ -55,7 +55,8 @@ describe('City production queue', () => {
       sendNetworkEvent: jest.fn(),
       hasResearchedTech: jest.fn().mockReturnValue(true),
       getSelectedGovernmentBranch: jest.fn().mockReturnValue(undefined),
-      awardIdealPoints: jest.fn()
+      awardIdealPoints: jest.fn(),
+      getEraStatus: jest.fn().mockReturnValue('normal')
     } as unknown as jest.Mocked<Player>;
 
     jest.spyOn(GameMap, 'getInstance').mockReturnValue({
@@ -126,6 +127,32 @@ describe('City production queue', () => {
     const stats = city.getStatline({ asArray: false });
 
     expect(stats["culture"]).toBe(1);
+  });
+
+  it('applies a +10% multiplier to yield stats during a golden age', () => {
+    (mockPlayer.getEraStatus as jest.Mock).mockReturnValue('golden');
+    city.addBuilding('Palace'); // production: 3
+
+    const stats = city.getStatline({ asArray: false });
+
+    expect(stats['production']).toBeCloseTo(3.3);
+  });
+
+  it('applies a -10% multiplier to yield stats during a dark age', () => {
+    (mockPlayer.getEraStatus as jest.Mock).mockReturnValue('dark');
+    city.addBuilding('Palace'); // production: 3
+
+    const stats = city.getStatline({ asArray: false });
+
+    expect(stats['production']).toBeCloseTo(2.7);
+  });
+
+  it('leaves stats unchanged during a normal era', () => {
+    city.addBuilding('Palace'); // production: 3
+
+    const stats = city.getStatline({ asArray: false });
+
+    expect(stats['production']).toBe(3);
   });
 
   it('processProductionTurn accumulates progress without completing below cost', () => {
