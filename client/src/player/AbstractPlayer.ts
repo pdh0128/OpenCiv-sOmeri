@@ -11,6 +11,7 @@ export class AbstractPlayer {
   private researchProgress: number;
   private researchedTechs: string[];
   private selectedGovernmentBranch: string | undefined;
+  private idealPoints: Record<string, number>;
 
   constructor(playerJSON: JSON) {
     this.provinceData = playerJSON["provinceData"];
@@ -19,6 +20,7 @@ export class AbstractPlayer {
     this.researchProgress = 0;
     this.researchedTechs = [];
     this.selectedGovernmentBranch = undefined;
+    this.idealPoints = playerJSON["idealPoints"] ?? { unity: 0, knowledge: 0, development: 0, order: 0, pioneering: 0 };
 
     NetworkEvents.on({
       eventName: "updateResearchQueue",
@@ -35,6 +37,14 @@ export class AbstractPlayer {
       parentObject: this,
       callback: (data: any) => {
         this.selectedGovernmentBranch = data["selectedBranch"];
+      }
+    });
+
+    NetworkEvents.on({
+      eventName: "updateIdealPoints",
+      parentObject: this,
+      callback: (data: any) => {
+        this.idealPoints = data["idealPoints"];
       }
     });
   }
@@ -76,6 +86,10 @@ export class AbstractPlayer {
 
   public getSelectedGovernmentBranch(): string | undefined {
     return this.selectedGovernmentBranch;
+  }
+
+  public getIdealPoints(): Record<string, number> {
+    return this.idealPoints;
   }
 
   protected units: Unit[] = [];
