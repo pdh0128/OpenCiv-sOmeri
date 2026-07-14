@@ -176,6 +176,7 @@ export class City {
       this.productionProgress -= cost;
       this.currentlyBuilding = undefined;
       this.addBuilding(completedName);
+      this.player.awardIdealPoints("development", 10);
     }
   }
 

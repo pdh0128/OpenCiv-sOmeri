@@ -54,7 +54,8 @@ describe('City production queue', () => {
       getNextAvailableCityName: jest.fn().mockReturnValue('TestCity'),
       sendNetworkEvent: jest.fn(),
       hasResearchedTech: jest.fn().mockReturnValue(true),
-      getSelectedGovernmentBranch: jest.fn().mockReturnValue(undefined)
+      getSelectedGovernmentBranch: jest.fn().mockReturnValue(undefined),
+      awardIdealPoints: jest.fn()
     } as unknown as jest.Mocked<Player>;
 
     jest.spyOn(GameMap, 'getInstance').mockReturnValue({
@@ -158,5 +159,23 @@ describe('City production queue', () => {
 
     expect(city.getProductionProgress()).toBe(0);
     expect(city.getBuildings().length).toBe(0);
+  });
+
+  it('awards development ideal points to the owning player when a building completes', () => {
+    city.queueBuilding('Granary'); // cost 12
+    jest.spyOn(city, 'getStatline').mockReturnValue({ production: 12 } as any);
+
+    city.processProductionTurn();
+
+    expect(mockPlayer.awardIdealPoints).toHaveBeenCalledWith('development', 10);
+  });
+
+  it('does not award development ideal points when a building does not complete this turn', () => {
+    city.queueBuilding('Granary'); // cost 12
+    jest.spyOn(city, 'getStatline').mockReturnValue({ production: 3 } as any);
+
+    city.processProductionTurn();
+
+    expect(mockPlayer.awardIdealPoints).not.toHaveBeenCalled();
   });
 });
