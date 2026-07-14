@@ -11,6 +11,8 @@ export interface CityOptions {
 }
 
 export class City {
+  private static readonly ERA_YIELD_STATS = ["science", "gold", "production", "faith", "culture"];
+
   private tile: Tile;
   private player: Player;
   private name: string;
@@ -302,7 +304,7 @@ export class City {
       if (eraMultiplier !== 1) {
         for (const cityStat of cityStats) {
           const statType = Object.keys(cityStat)[0];
-          if (["science", "gold", "production", "faith", "culture"].includes(statType)) {
+          if (City.ERA_YIELD_STATS.includes(statType)) {
             cityStat[statType] *= eraMultiplier;
           }
         }
@@ -355,7 +357,7 @@ export class City {
 
     const eraMultiplier = this.getEraMultiplier();
     if (eraMultiplier !== 1) {
-      for (const statType of ["science", "gold", "production", "faith", "culture"]) {
+      for (const statType of City.ERA_YIELD_STATS) {
         if (cityStats.hasOwnProperty(statType)) {
           cityStats[statType] *= eraMultiplier;
         }
