@@ -19,6 +19,7 @@ export class UnitActions {
         const city = new City({ player: player, tile: tile });
         tile.setCity(city);
         player.getCities().push(city);
+        player.awardIdealPoints("unity", 10);
 
         Game.getInstance()
           .getPlayers()
