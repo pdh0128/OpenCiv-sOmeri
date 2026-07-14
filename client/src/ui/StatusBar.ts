@@ -4,10 +4,17 @@ import { NetworkEvents } from "../network/Client";
 import { InGameScene } from "../scene/type/InGameScene";
 import { Actor } from "../scene/Actor";
 import { ActorGroup } from "../scene/ActorGroup";
+import { EraTransitionToast } from "./EraTransitionToast";
 import { GovernmentDisplayInfo } from "./GovernmentDisplayInfo";
 import { IdealsDisplayInfo } from "./IdealsDisplayInfo";
 import { Label } from "./Label";
 import { ResearchDisplayInfo } from "./ResearchDisplayInfo";
+
+const ERA_STATUS_LABELS: Record<string, string> = {
+  golden: "황금",
+  dark: "암흑",
+  normal: "평시"
+};
 
 export class StatusBar extends ActorGroup {
   private statusBarActor: Actor;
@@ -15,6 +22,7 @@ export class StatusBar extends ActorGroup {
   private governmentDisplayInfo: GovernmentDisplayInfo;
   private idealsDisplayInfo: IdealsDisplayInfo;
   private idealsButtonLabel: Label;
+  private eraStatusLabel: Label;
 
   private currentTurnText: string; //when currentTurnLabel may not be initalized yet
   private currentTurnLabel: Label;
@@ -65,6 +73,24 @@ export class StatusBar extends ActorGroup {
       parentObject: this,
       callback: (data) => {
         this.updateCurrentTurnLabel(data);
+      }
+    });
+
+    NetworkEvents.on({
+      eventName: "updateEraStatus",
+      parentObject: this,
+      callback: (data: any) => {
+        if (this.eraStatusLabel) {
+          this.eraStatusLabel.setText(`시대: ${ERA_STATUS_LABELS[data["eraStatus"]] ?? data["eraStatus"]}`);
+        }
+      }
+    });
+
+    NetworkEvents.on({
+      eventName: "eraTransition",
+      parentObject: this,
+      callback: (data: any) => {
+        Game.getInstance().getCurrentScene().addActor(new EraTransitionToast(data["eraStatus"], 300));
       }
     });
   }
@@ -307,6 +333,16 @@ export class StatusBar extends ActorGroup {
     await this.idealsButtonLabel.conformSize();
     this.idealsButtonLabel.setPosition(this.tradeLabel.getX() + this.tradeLabel.getWidth() + 10, 3);
     this.addActor(this.idealsButtonLabel);
+
+    // Era status information (read-only)
+    this.eraStatusLabel = new Label({
+      text: "시대: 평시",
+      font: "16px serif",
+      fontColor: "white"
+    });
+    await this.eraStatusLabel.conformSize();
+    this.eraStatusLabel.setPosition(this.idealsButtonLabel.getX() + this.idealsButtonLabel.getWidth() + 10, 3);
+    this.addActor(this.eraStatusLabel);
 
     // Current turn information
     this.currentTurnLabel = new Label({
