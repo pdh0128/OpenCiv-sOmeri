@@ -22,10 +22,12 @@ export class Tile {
   private y: number;
 
   private city: City;
+  private visited: boolean;
 
   constructor(tileType: string, x: number, y: number) {
     this.generationHeight = 0;
     this.generationTemp = 0;
+    this.visited = false;
 
     this.tileTypes = [];
 
@@ -56,6 +58,14 @@ export class Tile {
 
   public getCity(): City {
     return this.city;
+  }
+
+  public isVisited(): boolean {
+    return this.visited;
+  }
+
+  public markVisited() {
+    this.visited = true;
   }
 
   public addUnit(unit: Unit) {

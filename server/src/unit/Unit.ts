@@ -124,6 +124,12 @@ export class Unit {
     this.tile.removeUnit(this);
     targetTile.addUnit(this);
     this.tile = targetTile;
+
+    if (!targetTile.isVisited()) {
+      targetTile.markVisited();
+      this.getPlayer().awardIdealPoints("pioneering", 5);
+    }
+
     this.queuedMovementTiles = remainingTiles;
     this.availableMovement = remainingMovement;
 
