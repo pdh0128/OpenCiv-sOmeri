@@ -1,6 +1,7 @@
 import { WebSocket } from 'ws';
 import { Player } from '../../src/Player';
 import { Game } from '../../src/Game';
+import { ServerEvents } from '../../src/Events';
 
 jest.mock('../../src/Events');
 jest.mock('../../src/Game', () => ({
@@ -31,7 +32,8 @@ describe('Player', () => {
     expect(json).toEqual({
       name: 'Player1',
       provinceData: fakeProvince,
-      requestedNextTurn: false
+      requestedNextTurn: false,
+      idealPoints: { unity: 0, knowledge: 0, development: 0, order: 0, pioneering: 0 }
     });
   });
 
@@ -180,5 +182,135 @@ describe('Player government branch', () => {
     player.selectGovernmentBranch('senate');
     player.selectGovernmentBranch('assembly');
     expect(player.getSelectedGovernmentBranch()).toBe('assembly');
+  });
+});
+
+describe('Player ideal points', () => {
+  it('starts every ideal at 0', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    expect(player.getIdealPoints()).toEqual({
+      unity: 0,
+      knowledge: 0,
+      development: 0,
+      order: 0,
+      pioneering: 0
+    });
+  });
+
+  it('awardIdealPoints adds to the named ideal without touching others', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('unity', 10);
+    player.awardIdealPoints('unity', 5);
+
+    expect(player.getIdealPoints().unity).toBe(15);
+    expect(player.getIdealPoints().knowledge).toBe(0);
+  });
+
+  it('toJSON includes the current idealPoints', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('pioneering', 5);
+
+    expect(player.toJSON().idealPoints).toEqual({
+      unity: 0,
+      knowledge: 0,
+      development: 0,
+      order: 0,
+      pioneering: 5
+    });
+  });
+
+  it('processResearchTurn awards knowledge points when a technology completes', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    jest.spyOn(Game, 'getInstance').mockReturnValue({
+      getCurrentStateAs: jest.fn().mockReturnValue({
+        getTechnologyById: jest.fn().mockReturnValue({ id: 'irrigation', prerequisites: [], research_cost: 5 })
+      })
+    } as any);
+    player.queueResearch('irrigation');
+    (player as any).cities = [{ getStatline: () => ({ science: 5 }) }];
+
+    player.processResearchTurn();
+
+    expect(player.getIdealPoints().knowledge).toBe(15);
+
+    jest.restoreAllMocks();
+  });
+
+  it('processResearchTurn does not award knowledge points when nothing completes', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    jest.spyOn(Game, 'getInstance').mockReturnValue({
+      getCurrentStateAs: jest.fn().mockReturnValue({
+        getTechnologyById: jest.fn().mockReturnValue({ id: 'irrigation', prerequisites: [], research_cost: 100 })
+      })
+    } as any);
+    player.queueResearch('irrigation');
+    (player as any).cities = [{ getStatline: () => ({ science: 1 }) }];
+
+    player.processResearchTurn();
+
+    expect(player.getIdealPoints().knowledge).toBe(0);
+
+    jest.restoreAllMocks();
+  });
+});
+
+describe('Player order points from government stability', () => {
+  const senateData = { id: 'senate', name: '원로원', stat: 'culture', bonus_percent: 20 };
+
+  const storedCallbacks: Record<string, Function[]> = {};
+
+  beforeEach(() => {
+    storedCallbacks['nextTurn'] = [];
+
+    jest.spyOn(Game, 'getInstance').mockReturnValue({
+      getCurrentStateAs: jest.fn().mockReturnValue({
+        getGovernmentBranchById: jest.fn().mockReturnValue(senateData)
+      })
+    } as any);
+
+    jest.spyOn(ServerEvents, 'on').mockImplementation((options: any) => {
+      if (!storedCallbacks[options.eventName]) {
+        storedCallbacks[options.eventName] = [];
+      }
+      storedCallbacks[options.eventName].push(options.callback);
+    });
+
+    jest.spyOn(ServerEvents, 'call').mockImplementation((eventName: string, data: any) => {
+      for (const callback of storedCallbacks[eventName] ?? []) {
+        callback(data);
+      }
+    });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('awards no order points on the first turn a branch is selected', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.selectGovernmentBranch('senate');
+
+    ServerEvents.call('nextTurn', {});
+
+    expect(player.getIdealPoints().order).toBe(0);
+  });
+
+  it('awards order points on a second consecutive turn with the same branch', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.selectGovernmentBranch('senate');
+
+    ServerEvents.call('nextTurn', {});
+    ServerEvents.call('nextTurn', {});
+
+    expect(player.getIdealPoints().order).toBe(2);
+  });
+
+  it('awards no order points when no branch is selected', () => {
+    const player = new Player('Player1', fakeWebSocket());
+
+    ServerEvents.call('nextTurn', {});
+    ServerEvents.call('nextTurn', {});
+
+    expect(player.getIdealPoints().order).toBe(0);
   });
 });

@@ -27,6 +27,8 @@ export class Player {
   private researchProgress: number;
   private researchedTechs: Set<string>;
   private selectedGovernmentBranch: string | undefined;
+  private idealPoints: Record<string, number>;
+  private lastTurnGovernmentBranch: string | undefined;
 
   /**
    * Creates a new player object.
@@ -44,6 +46,8 @@ export class Player {
     this.researchProgress = 0;
     this.researchedTechs = new Set<string>();
     this.selectedGovernmentBranch = undefined;
+    this.idealPoints = { unity: 0, knowledge: 0, development: 0, order: 0, pioneering: 0 };
+    this.lastTurnGovernmentBranch = undefined;
 
     // Add event listener for when the player disconnects
     this.wsConnection.on("close", (data) => {
@@ -102,6 +106,11 @@ export class Player {
       callback: () => {
         this.processResearchTurn();
         this.sendResearchQueueUpdate();
+
+        if (this.selectedGovernmentBranch && this.selectedGovernmentBranch === this.lastTurnGovernmentBranch) {
+          this.awardIdealPoints("order", 2);
+        }
+        this.lastTurnGovernmentBranch = this.selectedGovernmentBranch;
       },
       globalEvent: true
     });
@@ -202,7 +211,8 @@ export class Player {
     return {
       name: this.name,
       provinceData: this.provinceData,
-      requestedNextTurn: this.requestedNextTurn
+      requestedNextTurn: this.requestedNextTurn,
+      idealPoints: this.idealPoints
     };
   }
 
@@ -282,6 +292,7 @@ export class Player {
       this.researchProgress -= cost;
       this.currentResearch = undefined;
       this.researchedTechs.add(completedId);
+      this.awardIdealPoints("knowledge", 15);
     }
   }
 
@@ -296,6 +307,22 @@ export class Player {
 
   public hasResearchedTech(techId: string): boolean {
     return this.researchedTechs.has(techId);
+  }
+
+  public awardIdealPoints(ideal: string, amount: number) {
+    this.idealPoints[ideal] += amount;
+    this.sendIdealPointsUpdate();
+  }
+
+  public getIdealPoints(): Record<string, number> {
+    return this.idealPoints;
+  }
+
+  public sendIdealPointsUpdate() {
+    this.sendNetworkEvent({
+      event: "updateIdealPoints",
+      idealPoints: this.idealPoints
+    });
   }
 
   public getCurrentResearch(): string | undefined {
