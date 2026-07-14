@@ -1,4 +1,5 @@
 import { assetList } from "./Assets";
+import { AutoPlayController } from "./AutoPlayController";
 import { ScenarioRegistry } from "./testing/ScenarioRegistry";
 import { Game } from "./Game";
 import { InGameScene } from "./scene/type/InGameScene";
@@ -30,5 +31,11 @@ Game.createInstance({ assetList: assetList, canvasColor: "gray" }, () => {
     } else {
       console.error(`Scenario '${scenarioName}' not found. Available: ${ScenarioRegistry.getAvailableScenarios().join(", ")}`);
     }
+  }
+
+  if (urlParams.get("autoplay") === "true") {
+    setTimeout(() => {
+      new AutoPlayController(Game.getInstance()).run();
+    }, 1000);
   }
 });
