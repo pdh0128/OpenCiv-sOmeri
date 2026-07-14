@@ -314,3 +314,73 @@ describe('Player order points from government stability', () => {
     expect(player.getIdealPoints().order).toBe(0);
   });
 });
+
+describe('Player era status', () => {
+  it('stays normal before the 20-turn checkpoint', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    for (let i = 0; i < 19; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('normal');
+  });
+
+  it('enters golden age when the ideal-point delta reaches 80 or more by the checkpoint', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('unity', 90);
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('golden');
+  });
+
+  it('enters dark age when the ideal-point delta is 20 or less by the checkpoint', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('unity', 10);
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('dark');
+  });
+
+  it('stays normal when the delta is strictly between the two thresholds', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('unity', 50);
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('normal');
+  });
+
+  it('only broadcasts an eraTransition event when the status actually changes', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    const sendSpy = jest.spyOn(player, 'sendNetworkEvent');
+
+    player.awardIdealPoints('unity', 90);
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+
+    const transitionCalls = sendSpy.mock.calls.filter((call) => call[0].event === 'eraTransition');
+    expect(transitionCalls.length).toBe(1);
+    expect(transitionCalls[0][0]).toEqual({
+      event: 'eraTransition',
+      eraStatus: 'golden',
+      previousEraStatus: 'normal'
+    });
+  });
+
+  it('measures delta since the last checkpoint, not the running total', () => {
+    const player = new Player('Player1', fakeWebSocket());
+    player.awardIdealPoints('unity', 90);
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('golden');
+
+    // No new points earned in the next 20-turn window -> delta is 0 -> falls to dark
+    for (let i = 0; i < 20; i++) {
+      player.processEraCheckpoint();
+    }
+    expect(player.getEraStatus()).toBe('dark');
+  });
+});

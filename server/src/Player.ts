@@ -29,6 +29,9 @@ export class Player {
   private selectedGovernmentBranch: string | undefined;
   private idealPoints: Record<string, number>;
   private lastTurnGovernmentBranch: string | undefined;
+  private eraStatus: string;
+  private eraCheckpointSnapshot: Record<string, number>;
+  private turnsSinceLastCheckpoint: number;
 
   /**
    * Creates a new player object.
@@ -48,6 +51,9 @@ export class Player {
     this.selectedGovernmentBranch = undefined;
     this.idealPoints = { unity: 0, knowledge: 0, development: 0, order: 0, pioneering: 0 };
     this.lastTurnGovernmentBranch = undefined;
+    this.eraStatus = "normal";
+    this.eraCheckpointSnapshot = { unity: 0, knowledge: 0, development: 0, order: 0, pioneering: 0 };
+    this.turnsSinceLastCheckpoint = 0;
 
     // Add event listener for when the player disconnects
     this.wsConnection.on("close", (data) => {
@@ -111,6 +117,8 @@ export class Player {
           this.awardIdealPoints("order", 2);
         }
         this.lastTurnGovernmentBranch = this.selectedGovernmentBranch;
+
+        this.processEraCheckpoint();
       },
       globalEvent: true
     });
@@ -323,6 +331,52 @@ export class Player {
       event: "updateIdealPoints",
       idealPoints: this.idealPoints
     });
+  }
+
+  public processEraCheckpoint() {
+    this.turnsSinceLastCheckpoint += 1;
+    if (this.turnsSinceLastCheckpoint < 20) {
+      return;
+    }
+
+    let delta = 0;
+    for (const ideal of Object.keys(this.idealPoints)) {
+      delta += this.idealPoints[ideal] - this.eraCheckpointSnapshot[ideal];
+    }
+
+    const previousEraStatus = this.eraStatus;
+
+    if (delta >= 80) {
+      this.eraStatus = "golden";
+    } else if (delta <= 20) {
+      this.eraStatus = "dark";
+    } else {
+      this.eraStatus = "normal";
+    }
+
+    this.eraCheckpointSnapshot = { ...this.idealPoints };
+    this.turnsSinceLastCheckpoint = 0;
+
+    this.sendEraStatusUpdate();
+
+    if (this.eraStatus !== previousEraStatus) {
+      this.sendNetworkEvent({
+        event: "eraTransition",
+        eraStatus: this.eraStatus,
+        previousEraStatus: previousEraStatus
+      });
+    }
+  }
+
+  public sendEraStatusUpdate() {
+    this.sendNetworkEvent({
+      event: "updateEraStatus",
+      eraStatus: this.eraStatus
+    });
+  }
+
+  public getEraStatus(): string {
+    return this.eraStatus;
   }
 
   public getCurrentResearch(): string | undefined {
