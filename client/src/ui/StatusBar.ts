@@ -5,6 +5,7 @@ import { InGameScene } from "../scene/type/InGameScene";
 import { Actor } from "../scene/Actor";
 import { ActorGroup } from "../scene/ActorGroup";
 import { GovernmentDisplayInfo } from "./GovernmentDisplayInfo";
+import { IdealsDisplayInfo } from "./IdealsDisplayInfo";
 import { Label } from "./Label";
 import { ResearchDisplayInfo } from "./ResearchDisplayInfo";
 
@@ -12,6 +13,8 @@ export class StatusBar extends ActorGroup {
   private statusBarActor: Actor;
   private researchDisplayInfo: ResearchDisplayInfo;
   private governmentDisplayInfo: GovernmentDisplayInfo;
+  private idealsDisplayInfo: IdealsDisplayInfo;
+  private idealsButtonLabel: Label;
 
   private currentTurnText: string; //when currentTurnLabel may not be initalized yet
   private currentTurnLabel: Label;
@@ -276,6 +279,34 @@ export class StatusBar extends ActorGroup {
     await this.tradeLabel.conformSize();
     this.tradeLabel.setPosition(this.tradeIcon.getX() + this.tradeIcon.getWidth() + 4, 3);
     this.addActor(this.tradeLabel);
+
+    // Five ideals information
+    this.idealsButtonLabel = new Label({
+      text: "오지(五志):",
+      font: "16px serif",
+      fontColor: "white",
+      onClick: () => {
+        const scene = Game.getInstance().getCurrentSceneAs<InGameScene>();
+
+        if (this.idealsDisplayInfo) {
+          scene.removeActor(this.idealsDisplayInfo);
+          this.idealsDisplayInfo = undefined;
+          return;
+        }
+
+        this.idealsDisplayInfo = new IdealsDisplayInfo(
+          scene.getClientPlayer(),
+          Game.getInstance().getWidth() / 2 - 216,
+          Game.getInstance().getHeight() / 2 - 220,
+          432,
+          440
+        );
+        scene.addActor(this.idealsDisplayInfo);
+      }
+    });
+    await this.idealsButtonLabel.conformSize();
+    this.idealsButtonLabel.setPosition(this.tradeLabel.getX() + this.tradeLabel.getWidth() + 10, 3);
+    this.addActor(this.idealsButtonLabel);
 
     // Current turn information
     this.currentTurnLabel = new Label({
